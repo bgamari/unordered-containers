@@ -1,4 +1,4 @@
-{-# LANGUAGE MagicHash, Rank2Types, UnboxedTuples #-}
+{-# LANGUAGE CPP, MagicHash, Rank2Types, UnboxedTuples #-}
 
 -- | This module exports a workaround for this bug:
 --
@@ -18,6 +18,8 @@ import qualified GHC.ST as ST
 import qualified GHC.Exts as Exts
 import Unsafe.Coerce
 
+#if __GLASGOW_HASKELL__ < 801
+
 -- | Return the value computed by a state transformer computation.
 -- The @forall@ ensures that the internal state used by the 'ST'
 -- computation is inaccessible to the rest of the program.
@@ -29,6 +31,13 @@ runSTRep :: (forall s. ST.STRep s a) -> a
 runSTRep st_rep = case st_rep realWorld# of
                         (# _, r #) -> r
 {-# INLINE [0] runSTRep #-}
+
+#else
+
+runST :: (forall s. ST.ST s a) -> a
+runST = ST.runST
+
+#endif
 
 noDuplicateST :: ST.ST s ()
 noDuplicateST = ST.ST $ \s -> (# unsafeCoerce Exts.noDuplicate# s, () #)
