@@ -102,7 +102,8 @@ import Data.HashMap.Base hiding (
     alter, adjust, fromList, fromListWith, insert, insertWith, differenceWith,
     intersectionWith, intersectionWithKey, map, mapWithKey, mapMaybe,
     mapMaybeWithKey, singleton, update, unionWith, unionWithKey)
-import Data.HashMap.Unsafe (runST)
+import Data.HashMap.Unsafe (runST, noDuplicateST)
+import Control.Monad.ST (ST)
 
 -- $strictness
 --
@@ -172,8 +173,8 @@ insertWith f k0 v0 m0 = go h0 k0 v0 0 m0
 
 -- | In-place update version of insertWith
 unsafeInsertWith :: (Eq k, Hashable k) => (v -> v -> v) -> k -> v -> HashMap k v
-                 -> HashMap k v
-unsafeInsertWith f k0 v0 m0 = runST (go h0 k0 v0 0 m0)
+                 -> ST s (HashMap k v)
+unsafeInsertWith f k0 v0 m0 = noDuplicateST >> go h0 k0 v0 0 m0
   where
     h0 = hash k0
     go !h !k x !_ Empty = return $! leaf h k x
@@ -455,7 +456,11 @@ fromList = L.foldl' (\ m (k, !v) -> HM.unsafeInsert k v m) empty
 -- will group all values by their keys in a list 'xs :: [(k, v)]' and
 -- return a 'HashMap k [v]'.
 fromListWith :: (Eq k, Hashable k) => (v -> v -> v) -> [(k, v)] -> HashMap k v
-fromListWith f = L.foldl' (\ m (k, v) -> unsafeInsertWith f k v m) empty
+fromListWith f xs0 = runST (go empty xs0)
+  where
+    go m ((k,v) : xs) = do m' <- unsafeInsertWith f k v m
+                           go m' xs
+    go m [] = return m
 {-# INLINE fromListWith #-}
 
 ------------------------------------------------------------------------

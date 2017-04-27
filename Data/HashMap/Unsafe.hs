@@ -10,10 +10,13 @@
 -- Code that uses this module should be compiled with -fno-full-laziness
 module Data.HashMap.Unsafe
     ( runST
+    , noDuplicateST
     ) where
 
 import GHC.Base (realWorld#)
 import qualified GHC.ST as ST
+import qualified GHC.Exts as Exts
+import Unsafe.Coerce
 
 -- | Return the value computed by a state transformer computation.
 -- The @forall@ ensures that the internal state used by the 'ST'
@@ -26,3 +29,6 @@ runSTRep :: (forall s. ST.STRep s a) -> a
 runSTRep st_rep = case st_rep realWorld# of
                         (# _, r #) -> r
 {-# INLINE [0] runSTRep #-}
+
+noDuplicateST :: ST.ST s ()
+noDuplicateST = ST.ST $ \s -> (# unsafeCoerce Exts.noDuplicate# s, () #)
