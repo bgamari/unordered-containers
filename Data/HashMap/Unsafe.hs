@@ -13,7 +13,9 @@ module Data.HashMap.Unsafe
     , noDuplicateST
     ) where
 
+#if __GLASGOW_HASKELL__ < 801
 import GHC.Base (realWorld#)
+#endif
 import qualified GHC.ST as ST
 import qualified GHC.Exts as Exts
 import Unsafe.Coerce
