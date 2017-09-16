@@ -296,7 +296,7 @@ cmp cmpk cmpv t1 t2 = go (toList' t1 []) (toList' t2 [])
   where
     go (Leaf k1 l1 : tl1) (Leaf k2 l2 : tl2)
       = compare k1 k2 `mappend` leafCompare l1 l2 `mappend` go tl1 tl2
-    go (Collision k1 ary1 : tl1) (Collision k2 ary2 : tl2)
+    go (Collision k1 ary1 : _tl1) (Collision k2 ary2 : _tl2)
       = compare k1 k2 `mappend` compare (A.length ary1) (A.length ary2) `mappend`
         unorderedCompare leafCompare (A.toList ary1) (A.toList ary2)
     go (Leaf _ _ : _) (Collision _ _ : _) = LT
